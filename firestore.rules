@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == "GANTI_EMAIL_ADMIN";
+    }
+
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll([
+        'mode','className','teamName','members','status','createdAt'
+      ])
+      && request.resource.data.status == 'waiting'
+      && request.resource.data.members is list
+      && request.resource.data.members.size() == request.resource.data.mode;
+      allow update, delete: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
